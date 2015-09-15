@@ -1,14 +1,14 @@
 # - Locate SDL2_gfx library
 # This module defines:
-# SDL2_GFX_LIBRARIES, the name of the library to link against
-# SDL2_GFX_INCLUDE_DIRS, where to find the headers
-# SDL2_GFX_FOUND, if false, do not try to link against
-# SDL2_GFX_VERSION_STRING - human-readable string containing the version of SDL2_gfx
+#  SDL2_GFX_LIBRARIES, the name of the library to link against
+#  SDL2_GFX_INCLUDE_DIRS, where to find the headers
+#  SDL2_GFX_FOUND, if false, do not try to link against
+#  SDL2_GFX_VERSION_STRING - human-readable string containing the version of SDL2_gfx
 #
 # For backward compatiblity the following variables are also set:
-# SDL2GFX_LIBRARY (same value as SDL2_GFX_LIBRARIES)
-# SDL2GFX_INCLUDE_DIR (same value as SDL2_GFX_INCLUDE_DIRS)
-# SDL2GFX_FOUND (same value as SDL2_GFX_FOUND)
+#  SDL2GFX_LIBRARY (same value as SDL2_GFX_LIBRARIES)
+#  SDL2GFX_INCLUDE_DIR (same value as SDL2_GFX_INCLUDE_DIRS)
+#  SDL2GFX_FOUND (same value as SDL2_GFX_FOUND)
 #
 # $SDL2DIR is an environment variable that would
 # correspond to the ./configure --prefix=$SDL2DIR
@@ -78,15 +78,16 @@ endif()
 set(SDL2_GFX_LIBRARIES ${SDL2_GFX_LIBRARY})
 set(SDL2_GFX_INCLUDE_DIRS ${SDL2_GFX_INCLUDE_DIR})
 
+include(FindPackageHandleStandardArgs)
+
+find_package_handle_standard_args(SDL2_gfx
+                                  REQUIRED_VARS SDL2_GFX_LIBRARIES SDL2_GFX_INCLUDE_DIRS
+                                  VERSION_VAR SDL2_GFX_VERSION_STRING)
+
 # for backward compatiblity
 set(SDL2GFX_LIBRARY ${SDL2_GFX_LIBRARIES})
 set(SDL2GFX_INCLUDE_DIR ${SDL2_GFX_INCLUDE_DIRS})
 set(SDL2GFX_FOUND ${SDL2_GFX_FOUND})
-
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDL2_gfx
-                                  REQUIRED_VARS SDL2_GFX_LIBRARIES SDL2_GFX_INCLUDE_DIRS
-                                  VERSION_VAR SDL2_GFX_VERSION_STRING)
-
 
 
 mark_as_advanced(SDL2_GFX_LIBRARY SDL2_GFX_INCLUDE_DIR)
