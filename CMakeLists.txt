@@ -1,29 +1,28 @@
 cmake_minimum_required (VERSION 2.8)
-project (SpaceTD)
 
-include_directories(include)
+project(SpaceTD)
 
-if (NOT DEFINED SDL2_INCLUDE_DIR)
-	message(WARNING "SDL2_INCLUDE_DIR is not set! Example: Add -DSDL2_INCLUDE_DIR=C:\\SDL2\\include")
-else()
-	message("SDL2_INCLUDE_DIR is set to ${SDL2_INCLUDE_DIR}")
-	include_directories(${SDL2_INCLUDE_DIR})
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/" ${CMAKE_MODULE_PATH})
+
+find_package(SDL2 REQUIRED)
+find_package(SDL2_gfx REQUIRED)
+find_package(SDL2_image REQUIRED)
+find_package(SDL2_mixer REQUIRED)
+find_package(SDL2_ttf REQUIRED)
+
+include_directories(
+	include
+	${SDL2_INCLUDE_DIRS}
+	${SDL2_GFX_INCLUDE_DIRS}
+	${SDL2_IMAGE_INCLUDE_DIRS}
+	${SDL2_MIXER_INCLUDE_DIRS}
+	${SDL2_TTF_INCLUDE_DIRS}
+)
+
+if("${CMAKE_SYSTEM}" MATCHES "Windows")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
 endif()
-
-if (NOT DEFINED SDL2_LIB_DIR)
-	message(WARNING "SDL2_LIB_DIR is not set! Example: Add -DSDL2_LIB_DIR=C:\\SDL2\\include\\lib")
-else()
-	message("SDL2_LIB_DIR is set to ${SDL2_LIB_DIR}")
-	SET(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} ${SDL2_LIB_DIR})	
-endif()
-
-IF("${CMAKE_SYSTEM}" MATCHES "Linux" OR "${CMAKE_SYSTEM}" MATCHES "FreeBSD")
-	SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11 -z defs")
-	SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++11 -Wall -z defs")
-ELSEIF("${CMAKE_SYSTEM}" MATCHES "Windows")
-	SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-	SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
-ENDIF()
 
 set(PROJECT_VERSION "1.0.0")
 
@@ -31,31 +30,43 @@ file(GLOB SRC_FILES "src/*.c" "src/*.cc" "src/*.cpp")
 file(GLOB_RECURSE INCS_H "include/*.h" "include/*.hpp")
 
 add_executable(${PROJECT_NAME} ${SRC_FILES} ${INCS_H})
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
+set_target_properties(${PROJECT_NAME} PROPERTIES
+	VERSION ${PROJECT_VERSION}
+	CXX_STANDARD 11
+	CXX_STANDARD_REQUIRED TRUE
+)
+
+target_link_libraries(${PROJECT_NAME}
+	${SDL2_LIBRARIES}
+	${SDL2_IMAGE_LIBRARIES}
+	${SDL2_TTF_LIBRARIES}
+	${SDL2_GFX_LIBRARIES}
+	${SDL2_MIXER_LIBRARIES}
+)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
-    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+	PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
-macro(my_find_library)          
-    find_library(${ARGV0} ${ARGV1})    
-    if (NOT ${ARGV0})
-        message(FATAL_ERROR "-- could not find library ${ARGV1}")
-    endif(NOT ${ARGV0})
-    message("-- Library ${ARGV1} found as ${${ARGV0}}")   
-endmacro()
+cmake_policy(SET CMP0026 OLD) # allow get LOCATION property
+get_property(TARGET_LOCATION TARGET ${PROJECT_NAME} PROPERTY LOCATION)
+get_filename_component(TARGET_DIRECTORY ${TARGET_LOCATION} DIRECTORY)
 
-my_find_library(SDL SDL2)
-my_find_library(SDL_MAIN SDL2main)
-my_find_library(SDL_IMAGE SDL2_image)
-my_find_library(SDL_TTF SDL2_ttf)
-my_find_library(SDL_GFX SDL2_gfx)
-my_find_library(SDL_mixer SDL2_mixer)
+if(NOT "${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${TARGET_DIRECTORY}")
+	# list of files for which we add a copy rule
+	file(GLOB_RECURSE RES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "resource/*.*")
+	set(RESOURCES)
 
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} 
-${SDL}
-${SDL_MAIN}
-${SDL_IMAGE}
-${SDL_TTF}
-${SDL_GFX}
-${SDL_mixer}
-)
+	foreach(ITEM IN LISTS RES)
+		set(ITEM_OUTPUT_PATH "${TARGET_DIRECTORY}/${ITEM}")
+		message(STATUS ${ITEM_OUTPUT_PATH})
+		add_custom_command(
+			OUTPUT "${ITEM_OUTPUT_PATH}"
+			COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}" "${ITEM_OUTPUT_PATH}"
+			DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}"
+		)
+		list(APPEND RESOURCES "${ITEM_OUTPUT_PATH}")
+	endforeach()
+endif()
+
+add_custom_target(Resources ALL DEPENDS ${RESOURCES})
+add_dependencies(${PROJECT_NAME} Resources)
