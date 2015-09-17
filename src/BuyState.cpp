@@ -67,7 +67,6 @@ BuyState::BuyState(entityx::Entity turret, const TurretInfo& ti, GamePlay* gameP
 	int posX = turret_.component<Position>()->x_ - 4 * 46;
 	posX += 45;
 	int posY = turret_.component<Position>()->y_;
-	int lineOffset = 10;
 
 	ss << ti.name_ << std::endl;
 	text(posX , posY, ss, green);

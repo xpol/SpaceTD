@@ -64,7 +64,6 @@ void InputSystem::update(entityx::EntityManager &es, entityx::EventManager &even
 				SDL_Point mousePosRunning;
 				mousePosRunning.x = e.button.x;
 				mousePosRunning.y = e.button.y;
-				SDL_Rect mouseRect { x, y, 20, 20 };
 				SDL_Rect boxRect = b->box_;
 
 				if(box.has_component<ViewPort>() && box.has_component<Position>())

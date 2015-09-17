@@ -50,7 +50,6 @@ public:
 	std::string toPop_;
 	int fps_;
 private:
-	SDL_Event event_;
 	Uint32 new_time_;
 	Uint32 old_time_;
 

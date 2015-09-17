@@ -28,8 +28,9 @@ enum TurretLevel
 	L3 = 3
 };
 
-struct TurretInfo
+class TurretInfo
 {
+public:
 	TurretInfo(TurretType type);
 
 	void levelUp();

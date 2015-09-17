@@ -10,11 +10,7 @@
 
 ModifierSystem::ModifierSystem() :
 	game_(Game::getInstance()),
-	rm_(ResourceManager::getInstance()),
-	green({ 0, 255, 0, 255 }),
-	blue({ 0, 0, 255, 255 }),
-	red({ 255, 0, 0, 255 }),
-	yellow({ 255, 255, 0, 255 })
+	rm_(ResourceManager::getInstance())
 {
 }
 ModifierSystem::~ModifierSystem()

@@ -27,11 +27,6 @@ public:
 	Game& game_;
 	ResourceManager& rm_;
 	TTF_Font *font_;
-private:
-	SDL_Color green;
-	SDL_Color blue;
-	SDL_Color red;
-	SDL_Color yellow;
 };
 
 #endif /* MODIFIERSYSTEM_HPP_ */
