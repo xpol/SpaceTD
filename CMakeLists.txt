@@ -19,10 +19,6 @@ include_directories(
 	${SDL2_TTF_INCLUDE_DIRS}
 )
 
-if("${CMAKE_SYSTEM}" MATCHES "Windows")
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
-endif()
 
 set(PROJECT_VERSION "1.0.0")
 
@@ -36,7 +32,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 	CXX_STANDARD_REQUIRED TRUE
 )
 
-target_link_libraries(${PROJECT_NAME}
+set(LIBS
 	${SDL2_LIBRARIES}
 	${SDL2_IMAGE_LIBRARIES}
 	${SDL2_TTF_LIBRARIES}
@@ -44,29 +40,86 @@ target_link_libraries(${PROJECT_NAME}
 	${SDL2_MIXER_LIBRARIES}
 )
 
+target_link_libraries(${PROJECT_NAME} ${LIBS})
+
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
 	PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
-cmake_policy(SET CMP0026 OLD) # allow get LOCATION property
-get_property(TARGET_LOCATION TARGET ${PROJECT_NAME} PROPERTY LOCATION)
-get_filename_component(TARGET_DIRECTORY ${TARGET_LOCATION} DIRECTORY)
+	include (CMakeParseArguments)
 
-if(NOT "${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${TARGET_DIRECTORY}")
+#
+#
+# add_copy_target_for_ide_debugging(TARGET name FILES file1 [file2...] [FLATTEN])
+function(add_copy_target_for_ide_debugging)
+
+	set(options FLATTEN)
+	set(oneValueArgs TARGET)
+	set(multiValueArgs FILES)
+	cmake_parse_arguments(ACTFID_ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+	if(CMAKE_GENERATOR STREQUAL Xcode)
+		# for Xcode the debug working directory is the target directory
+		cmake_policy(SET CMP0026 OLD) # allow get LOCATION property
+		get_property(TARGET_LOCATION TARGET ${PROJECT_NAME} PROPERTY LOCATION)
+		get_filename_component(DEBUG_WORKING_DIR ${TARGET_LOCATION} DIRECTORY)
+	elseif(MSVC)
+		# for MSVC the debug working directory is the project directory that is CMAKE_CURRENT_BINARY_DIR
+		set(DEBUG_WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR})
+	endif()
+
+
 	# list of files for which we add a copy rule
-	file(GLOB_RECURSE RES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "resource/*.*")
-	set(RESOURCES)
-
-	foreach(ITEM IN LISTS RES)
-		set(ITEM_OUTPUT_PATH "${TARGET_DIRECTORY}/${ITEM}")
-		#message(STATUS ${ITEM_OUTPUT_PATH})
+	set(OUTPUTS)
+	foreach(ITEM IN LISTS ACTFID_ARG_FILES)
+		if(ACTFID_ARG_FLATTEN)
+			get_filename_component(BASE "${ITEM}" NAME)
+			set(ITEM_OUTPUT_PATH "${DEBUG_WORKING_DIR}/${BASE}")
+		else()
+			set(ITEM_OUTPUT_PATH "${DEBUG_WORKING_DIR}/${ITEM}")
+		endif()
+		message(STATUS ${ITEM_OUTPUT_PATH})
 		add_custom_command(
 			OUTPUT "${ITEM_OUTPUT_PATH}"
 			COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}" "${ITEM_OUTPUT_PATH}"
 			DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}"
 		)
-		list(APPEND RESOURCES "${ITEM_OUTPUT_PATH}")
+		list(APPEND OUTPUTS "${ITEM_OUTPUT_PATH}")
 	endforeach()
-endif()
 
-add_custom_target(Resources ALL DEPENDS ${RESOURCES})
-add_dependencies(${PROJECT_NAME} Resources)
+	message(STATUS ${ACTFID_ARG_TARGET})
+	add_custom_target(${ACTFID_ARG_TARGET} ALL DEPENDS ${OUTPUTS})
+endfunction(add_copy_target_for_ide_debugging)
+
+# search_runtime_dlls(OUT )
+macro(directory Var List)
+	foreach(ITEM IN LISTS ${List})
+		get_filename_component(DIR ${ITEM} DIRECTORY)
+		list(APPEND ${Var} "${DIR}")
+		#message(STATUS "${DIR}")
+	endforeach()
+	list(REMOVE_DUPLICATES ${Var})
+endmacro(directory)
+
+macro(append Var List Suffix)
+	foreach(Item IN LISTS ${List})
+		list(APPEND ${Var} "${Item}${Suffix}")
+		#message(STATUS "${Item}${Suffix}")
+	endforeach()
+endmacro(append)
+
+
+file(GLOB_RECURSE RESOURCES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "resource/*.*")
+add_copy_target_for_ide_debugging(TARGET CopyResources FILES ${RESOURCES})
+add_dependencies(${PROJECT_NAME} CopyResources)
+
+
+message(STATUS "dlls ${RUNTIME_DLLS}")
+
+if(MSVC)
+	directory(LIBDIRS LIBS)
+	append(PATTERNS LIBDIRS "/*.dll")
+	file(GLOB RUNTIME_DLLS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" ${PATTERNS})
+	message(STATUS "${RUNTIME_DLLS}")
+	add_copy_target_for_ide_debugging(TARGET CopyDlls FILES ${RUNTIME_DLLS} FLATTEN)
+	add_dependencies(${PROJECT_NAME} CopyDlls)
+endif()

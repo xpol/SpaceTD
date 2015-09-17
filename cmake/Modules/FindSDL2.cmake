@@ -81,11 +81,9 @@ find_path(SDL2_INCLUDE_DIRS
 find_library(SDL2_LIBRARY_TEMP
   NAMES SDL2 SDL-2.0
   HINTS
-
     ENV SDL2DIR
-  PATH_SUFFIXES lib x64 x86
-  PATHS
-  ${CMAKE_SOURCE_DIR}/deps
+  PATH_SUFFIXES lib lib/x64 lib/x86
+  PATHS ${CMAKE_SOURCE_DIR}/deps
 )
 
 if(NOT SDL2_BUILDING_LIBRARY)
@@ -98,13 +96,13 @@ if(NOT SDL2_BUILDING_LIBRARY)
       NAMES SDL2main SDLmain-2.0
       HINTS
         ENV SDL2DIR
-      PATH_SUFFIXES lib x64 x86
+      PATH_SUFFIXES lib lib/x64 lib/x86
       PATHS
-      /sw
-      /opt/local
-      /opt/csw
-      /opt
-      ${CMAKE_SOURCE_DIR}/deps
+        /sw
+        /opt/local
+        /opt/csw
+        /opt
+        ${CMAKE_SOURCE_DIR}/deps
     )
   endif()
 endif()
