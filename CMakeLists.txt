@@ -77,7 +77,7 @@ function(add_copy_target_for_ide_debugging)
 		else()
 			set(ITEM_OUTPUT_PATH "${DEBUG_WORKING_DIR}/${ITEM}")
 		endif()
-		message(STATUS ${ITEM_OUTPUT_PATH})
+		#message(STATUS ${ITEM_OUTPUT_PATH})
 		add_custom_command(
 			OUTPUT "${ITEM_OUTPUT_PATH}"
 			COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}" "${ITEM_OUTPUT_PATH}"
@@ -86,7 +86,7 @@ function(add_copy_target_for_ide_debugging)
 		list(APPEND OUTPUTS "${ITEM_OUTPUT_PATH}")
 	endforeach()
 
-	message(STATUS ${ACTFID_ARG_TARGET})
+	#message(STATUS ${ACTFID_ARG_TARGET})
 	add_custom_target(${ACTFID_ARG_TARGET} ALL DEPENDS ${OUTPUTS})
 endfunction(add_copy_target_for_ide_debugging)
 
@@ -107,13 +107,11 @@ macro(append Var List Suffix)
 	endforeach()
 endmacro(append)
 
-
-file(GLOB_RECURSE RESOURCES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "resource/*.*")
-add_copy_target_for_ide_debugging(TARGET CopyResources FILES ${RESOURCES})
-add_dependencies(${PROJECT_NAME} CopyResources)
-
-
-message(STATUS "dlls ${RUNTIME_DLLS}")
+if(CMAKE_GENERATOR STREQUAL Xcode OR MSVC)
+	file(GLOB_RECURSE RESOURCES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "resource/*.*")
+	add_copy_target_for_ide_debugging(TARGET CopyResources FILES ${RESOURCES})
+	add_dependencies(${PROJECT_NAME} CopyResources)
+endif()
 
 if(MSVC)
 	directory(LIBDIRS LIBS)
